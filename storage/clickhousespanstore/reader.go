@@ -76,9 +76,6 @@ func (r *TraceReader) getTraces(ctx context.Context, traceIDs []model.TraceID, s
 		args = append(args, r.tenant)
 	}
 
-	query += " AND timestamp >= ? AND timestamp <= ?"
-	args = append(args, start, end)
-
 	if !start.IsZero() && !end.IsZero() {
 		query += " AND timestamp >= ? AND timestamp <= ?"
 		args = append(args, start, end)

@@ -846,7 +846,7 @@ func TestSpanWriter_getTracesRowsScanError(t *testing.T) {
 
 	mock.
 		ExpectQuery(
-			fmt.Sprintf("SELECT model FROM %s PREWHERE traceID IN (?,?,?,?)", testSpansTable),
+			fmt.Sprintf("SELECT model FROM %s WHERE traceID IN (?,?,?,?)", testSpansTable),
 		).
 		WithArgs(traceIDStrings...).
 		WillReturnRows(rows)
