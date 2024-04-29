@@ -576,14 +576,14 @@ func TestTraceReader_GetTrace(t *testing.T) {
 			if test.tenant == "" {
 				mock.
 					ExpectQuery(
-						fmt.Sprintf("SELECT model FROM %s PREWHERE traceID IN (?)", testSpansTable),
+						fmt.Sprintf("SELECT model FROM %s WHERE traceID IN (?)", testSpansTable),
 					).
 					WithArgs(traceID).
 					WillReturnRows(test.queryResult)
 			} else {
 				mock.
 					ExpectQuery(
-						fmt.Sprintf("SELECT model FROM %s PREWHERE traceID IN (?) AND tenant = ?", testSpansTable),
+						fmt.Sprintf("SELECT model FROM %s WHERE traceID IN (?) AND tenant = ?", testSpansTable),
 					).
 					WithArgs(traceID, test.tenant).
 					WillReturnRows(test.queryResult)
@@ -627,8 +627,8 @@ func TestSpanWriter_getTraces(t *testing.T) {
 		traceIDStrings[i] = traceID.String()
 	}
 
-	defaultQuery := fmt.Sprintf("SELECT model FROM %s PREWHERE traceID IN (?,?,?,?)", testSpansTable)
-	tenantQuery := fmt.Sprintf("SELECT model FROM %s PREWHERE traceID IN (?,?,?,?) AND tenant = ?", testSpansTable)
+	defaultQuery := fmt.Sprintf("SELECT model FROM %s WHERE traceID IN (?,?,?,?)", testSpansTable)
+	tenantQuery := fmt.Sprintf("SELECT model FROM %s WHERE traceID IN (?,?,?,?) AND tenant = ?", testSpansTable)
 
 	tests := map[string]struct {
 		tenant         string
@@ -731,8 +731,8 @@ func TestSpanWriter_getTracesIncorrectData(t *testing.T) {
 		traceIDStrings[i] = traceID.String()
 	}
 
-	defaultQuery := fmt.Sprintf("SELECT model FROM %s PREWHERE traceID IN (?,?,?,?)", testSpansTable)
-	tenantQuery := fmt.Sprintf("SELECT model FROM %s PREWHERE traceID IN (?,?,?,?) AND tenant = ?", testSpansTable)
+	defaultQuery := fmt.Sprintf("SELECT model FROM %s WHERE traceID IN (?,?,?,?)", testSpansTable)
+	tenantQuery := fmt.Sprintf("SELECT model FROM %s WHERE traceID IN (?,?,?,?) AND tenant = ?", testSpansTable)
 
 	tests := map[string]struct {
 		tenant         string
@@ -814,7 +814,7 @@ func TestSpanWriter_getTracesQueryError(t *testing.T) {
 
 	mock.
 		ExpectQuery(
-			fmt.Sprintf("SELECT model FROM %s PREWHERE traceID IN (?,?,?,?)", testSpansTable),
+			fmt.Sprintf("SELECT model FROM %s WHERE traceID IN (?,?,?,?)", testSpansTable),
 		).
 		WithArgs(traceIDStrings...).
 		WillReturnError(errorMock)

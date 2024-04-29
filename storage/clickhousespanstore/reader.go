@@ -66,8 +66,8 @@ func (r *TraceReader) getTraces(ctx context.Context, traceIDs []model.TraceID, s
 		args[i] = traceID.String()
 	}
 
-	// It's more efficient to do PREWHERE on traceID to the only read needed models:
-	// * https://clickhouse.tech/docs/en/sql-reference/statements/select/prewhere/
+	// It's more efficient to do WHERE on traceID to the only read needed models:
+	// * https://clickhouse.tech/docs/en/sql-reference/statements/select/WHERE/
 	//nolint:gosec  , G201: SQL string formatting
 	query := fmt.Sprintf("SELECT model FROM %s WHERE traceID IN (%s)", r.spansTable, "?"+strings.Repeat(",?", len(traceIDs)-1))
 
