@@ -699,7 +699,7 @@ func TestSpanWriter_getTraces(t *testing.T) {
 				WillReturnRows(test.queryResult)
 
 			traceReader := NewTraceReader(db, testOperationsTable, testIndexTable, testSpansTable, test.tenant, testMaxNumSpans)
-			traces, err := traceReader.getTraces(context.Background(), traceIDs, zeroTime(), zeroTime())
+			traces, err := traceReader.getTraces(context.Background(), traceIDs, time.Time{}, time.Time{})
 			require.NoError(t, err)
 			model.SortTraces(traces)
 			assert.Equal(t, test.expectedTraces, traces)
@@ -782,7 +782,7 @@ func TestSpanWriter_getTracesIncorrectData(t *testing.T) {
 				WillReturnRows(test.queryResult)
 
 			traceReader := NewTraceReader(db, testOperationsTable, testIndexTable, testSpansTable, test.tenant, testMaxNumSpans)
-			traces, err := traceReader.getTraces(context.Background(), traceIDs, zeroTime(), zeroTime())
+			traces, err := traceReader.getTraces(context.Background(), traceIDs, time.Time{}, time.Time{})
 			if test.expectedError == nil {
 				assert.NoError(t, err)
 			} else {
@@ -819,7 +819,7 @@ func TestSpanWriter_getTracesQueryError(t *testing.T) {
 		WithArgs(traceIDStrings...).
 		WillReturnError(errorMock)
 
-	traces, err := traceReader.getTraces(context.Background(), traceIDs, zeroTime(), zeroTime())
+	traces, err := traceReader.getTraces(context.Background(), traceIDs, time.Time{}, time.Time{})
 	assert.EqualError(t, err, errorMock.Error())
 	assert.Equal(t, []*model.Trace(nil), traces)
 	assert.NoError(t, mock.ExpectationsWereMet())
@@ -851,7 +851,7 @@ func TestSpanWriter_getTracesRowsScanError(t *testing.T) {
 		WithArgs(traceIDStrings...).
 		WillReturnRows(rows)
 
-	traces, err := traceReader.getTraces(context.Background(), traceIDs, zeroTime(), zeroTime())
+	traces, err := traceReader.getTraces(context.Background(), traceIDs, time.Time{}, time.Time{})
 	assert.EqualError(t, err, errorMock.Error())
 	assert.Equal(t, []*model.Trace(nil), traces)
 	assert.NoError(t, mock.ExpectationsWereMet())
@@ -865,7 +865,7 @@ func TestSpanWriter_getTraceNoTraceIDs(t *testing.T) {
 	traceReader := NewTraceReader(db, testOperationsTable, testIndexTable, testSpansTable, "", testMaxNumSpans)
 	traceIDs := make([]model.TraceID, 0)
 
-	traces, err := traceReader.getTraces(context.Background(), traceIDs, zeroTime(), zeroTime())
+	traces, err := traceReader.getTraces(context.Background(), traceIDs, time.Time{}, time.Time{})
 	require.NoError(t, err)
 	assert.Equal(t, make([]*model.Trace, 0), traces)
 }
