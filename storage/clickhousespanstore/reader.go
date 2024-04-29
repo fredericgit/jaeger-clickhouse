@@ -51,7 +51,7 @@ func NewTraceReader(db *sql.DB, operationsTable, indexTable, spansTable TableNam
 	}
 }
 
-func (r *TraceReader) getTraces(ctx context.Context, traceIDs []model.TraceID) ([]*model.Trace, error) {
+func (r *TraceReader) getTraces(ctx context.Context, traceIDs []model.TraceID, start, end time.Time) ([]*model.Trace, error) {
 	returning := make([]*model.Trace, 0, len(traceIDs))
 
 	if len(traceIDs) == 0 {
@@ -69,11 +69,19 @@ func (r *TraceReader) getTraces(ctx context.Context, traceIDs []model.TraceID) (
 	// It's more efficient to do PREWHERE on traceID to the only read needed models:
 	// * https://clickhouse.tech/docs/en/sql-reference/statements/select/prewhere/
 	//nolint:gosec  , G201: SQL string formatting
-	query := fmt.Sprintf("SELECT model FROM %s PREWHERE traceID IN (%s)", r.spansTable, "?"+strings.Repeat(",?", len(traceIDs)-1))
+	query := fmt.Sprintf("SELECT model FROM %s WHERE traceID IN (%s)", r.spansTable, "?"+strings.Repeat(",?", len(traceIDs)-1))
 
 	if r.tenant != "" {
 		query += " AND tenant = ?"
 		args = append(args, r.tenant)
+	}
+
+	query += " AND timestamp >= ? AND timestamp <= ?"
+	args = append(args, start, end)
+
+	if !start.IsZero() && !end.IsZero() {
+		query += " AND timestamp >= ? AND timestamp <= ?"
+		args = append(args, start, end)
 	}
 
 	if r.maxNumSpans > 0 {
@@ -132,12 +140,16 @@ func (r *TraceReader) getTraces(ctx context.Context, traceIDs []model.TraceID) (
 	return returning, nil
 }
 
+func zeroTime() time.Time {
+	return time.Date(1, time.Month(1), 1, 0, 0, 0, 0, time.UTC)
+}
+
 // GetTrace takes a traceID and returns a Trace associated with that traceID
 func (r *TraceReader) GetTrace(ctx context.Context, traceID model.TraceID) (*model.Trace, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GetTrace")
 	defer span.Finish()
 
-	traces, err := r.getTraces(ctx, []model.TraceID{traceID})
+	traces, err := r.getTraces(ctx, []model.TraceID{traceID}, zeroTime(), zeroTime())
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +275,12 @@ func (r *TraceReader) FindTraces(ctx context.Context, query *spanstore.TraceQuer
 		return nil, err
 	}
 
-	return r.getTraces(ctx, traceIDs)
+	start := query.StartTimeMin
+	end := query.StartTimeMax
+	if end.IsZero() {
+		end = time.Now()
+	}
+	return r.getTraces(ctx, traceIDs, start, end)
 }
 
 // FindTraceIDs retrieves only the TraceIDs that match the traceQuery, but not the trace data
